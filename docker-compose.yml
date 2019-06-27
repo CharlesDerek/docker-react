@@ -1,0 +1,37 @@
+#Version on compose
+version: '3'
+
+# Containers that are going to be made once we run our compose.
+services:
+  #Name of the applications to run on execution:
+  web:
+    # Specification of the image we're going to use:
+    build:
+    #" build: . " is what we would've used for a dockerfile,
+    #but there's no dockerfile inside of the local
+    #directory (we created a dockerfile.dev).
+    #we'll use a context (instead of ".").
+      #{context}: Where we want all these files and images to be pulled from (which
+      #we want from the same directory as the docker compose).
+      context: .
+      #{dockerfile}: Where the Dockerfile we want to run is located.
+      dockerfile: Dockerfile.dev
+    # Ports specifiation
+    ports:
+      - "3000:3000"
+    # Specifiying Specific Volumes:
+    volumes:
+      # Do not map a local file over from node modules.
+      - /app/node_modules
+      # {map_local_directory "." :(onto) app_folder_inside_directory "/app"}
+      - .:/app
+  #Separate Server/container that will be used just for testing.
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - .:/app
+    #override the tests initial run commands of the tests build:
+    command: ["npm", "run", "test"]

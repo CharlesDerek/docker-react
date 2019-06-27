@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dont track any of these folders/dependencies
 /node_modules
+/phpmyadmin
 /.pnp
 .pnp.js
 
@@ -17,6 +18,21 @@
 .env.development.local
 .env.test.local
 .env.production.local
+*.pydevproject
+.project
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+.htaccess
+
 
 npm-debug.log*
 yarn-debug.log*
