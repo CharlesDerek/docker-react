@@ -1,0 +1,80 @@
+# Makes it required to have super user level permissions in order to execute
+ #this build.
+sudo: required
+
+# make sure that Travis.ci realizes we need docker pre-installed:
+services:
+ #travis.ci is going to automatically install docker on our running container. 
+ - docker
+
+# create a series of commands/steps that are going to be ran before running our
+ #tests or pushing to production. 
+before_install:
+ #force a build from the Dockerfile.dev file while looking in "." (current dir).
+ - docker build -t charlesderek/docker-react -f Dockerfile.dev .
+  #-t:
+  #charlesderek: Our username in Docker
+  #docker-react: The build name we intend to use (best practice to use repo name).
+
+# script: Contains all the specific commands needed to be executed to actually
+ #run our test suite.
+script:
+ #NOTE: any other command besides '0' will be assumed as failure.
+ - docker run charlesderek/docker-react npm run test -- --coverage
+ # [ -- -- coverage ]: executes the test the destroys the image when results are
+  #finished, and returns the results of the test execution.
+
+
+###EVERYTHING BELOW DEPLOYS THE APPLICATION TO AWS###
+
+
+#deploy: Where a bunch of configs will be added to tell travis exactly how to 
+ #grab the application and how to deploy it to AWS.
+deploy:
+ #provider: travis ci comes with many different providers pre-installed (like
+  #AWS and Digital Ocean ). Which means where telling Travis "use this set of
+  #instructions to deploy our application.
+ provider: elasticbeanstalk
+ 
+ #region: This is entirely dependent of where your running instance was set up.
+ region: "us-west-2"
+ #us-west-2: May be different code for AWS, GCP, and D.O. Instance.
+
+ #app: Specify the name of the application from the provider.
+ app: "docker-react"
+  #{^docker-react}: the name of the application type we chose on "AWS"
+    #known as a common set of configuration
+
+ #env: the environment name on AWS (we named it Docker-env)
+ env:"Docker-env"
+
+ #bucket_name: When travis desides to deploy your codebase, it's going to take
+  #all of your files inside of your github repository. It's going to zip them
+  #all into one single file, and then it's going to copy them all over to a
+  #s3 bucket which is essentially a hard drive running on AWS. Once it copies
+  #all of those files over. Travis-ci is going to poke at elasticbeanstalk and
+  #say hey i just uploaded this zipped file, now lets use that to redeploy your 
+  #application. So we are providing the name of the buck that Travis-ci is
+  #going to put our zip file into.
+    ##NOTE: Elasticbeanstalk automatically creates an s3 when you create an env##
+    ##s3 bucket is going to be the name of the environment##
+ bucket_name: "elasticbeanstalk-us-west-2-306476627547"
+  #"elasticbeanstalk-us-west-2-306476627547": Example s3 bucket.
+
+ #bucket_path: until there's a directory path inside your s3 use the app-name 
+ bucket_path: "docker-react"
+
+ #on: Anytime we push code to branch master, it's time to deploy the application.
+ on:
+  branch: master
+   #IAM AMAZON- Identiy and Access Management
+    #we are going to use this resource on AWS to make user thati is going to be 
+     #travis-ci and we can manage their access from AWS.
+     #Add user inside the AWS dashboard.
+     #Addes user keys inside travis-ci under environment vars in travis GUI
+      #({aws_access_key}:{value})
+      #({aws_secret_key}:{value})
+ access_key_id: $AWS_ACCESS_KEY
+ secret_access_key:
+  #NOTICE: below uses "" double quotes otherwise wont work
+  secure: "$AWS_SECRET_KEY"
